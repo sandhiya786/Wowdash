@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en" class="antialiased" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EduVision — Education Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-light: #eef2ff;
+      --secondary: #10b981;
+      --accent: #f59e0b;
+      --danger: #ef4444;
+    }
+    
+    .card { 
+      background: white; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 12px rgba(20,24,40,0.08); 
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      height: fit-content;
+    }
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(20,24,40,0.12);
+    }
+    .small-pill { 
+      font-size: 12px; 
+      padding: 6px 10px; 
+      border-radius: 8px; 
+      display:inline-flex; 
+      align-items:center; 
+      gap:6px; 
+      font-weight: 500;
+    }
+    .gradient-pink { 
+      background: linear-gradient(135deg, #ffe8ee, #fbe9f1); 
+    }
+    .gradient-purple { 
+      background: linear-gradient(135deg, #efe7ff, #f4ebff); 
+    }
+    .gradient-cyan { 
+      background: linear-gradient(135deg, #e8fbff, #def7ff); 
+    }
+    .gradient-orange { 
+      background: linear-gradient(135deg, #fff4e6, #fff2e0); 
+    }
+    .icon-circle { 
+      width:44px; 
+      height:44px; 
+      border-radius:999px; 
+      display:inline-flex; 
+      align-items:center; 
+      justify-content:center; 
+      background:white; 
+      box-shadow: 0 2px 8px rgba(14,20,40,0.06); 
+    }
+    .muted { 
+      color: #6b7280; 
+    }
+    .nav-item {
+      transition: all 0.2s ease;
+      border-radius: 10px;
+    }
+    .nav-item:hover {
+      background-color: rgba(99, 102, 241, 0.05);
+    }
+    .active-nav {
+      background-color: rgba(99, 102, 241, 0.1);
+      color: rgb(79, 70, 229);
+      font-weight: 600;
+    }
+    .progress-bar {
+      height: 6px;
+      border-radius: 3px;
+      background-color: #e5e7eb;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+    .notification-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--danger);
+      position: absolute;
+      top: 8px;
+      right: 8px;
+    }
+    .theme-toggle {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    /* Grid alignment fixes */
+    .grid-container {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: repeat(12, 1fr);
+      align-items: start;
+    }
+    
+    .stat-card {
+      grid-column: span 3;
+    }
+    
+    .chart-main {
+      grid-column: span 8;
+    }
+    
+    .chart-sidebar {
+      grid-column: span 4;
+    }
+    
+    .bottom-card {
+      grid-column: span 4;
+    }
+    
+    @media (max-width: 1024px) {
+      .stat-card {
+        grid-column: span 6;
+      }
+      
+      .chart-main, .chart-sidebar, .bottom-card {
+        grid-column: span 12;
+      }
+    }
+    
+    @media (max-width: 640px) {
+      .stat-card {
+        grid-column: span 12;
+      }
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 text-slate-800">
+  <div id="root" class="min-h-screen flex">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-white border-r border-gray-100 p-4 fixed md:static inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-40">
+      <div class="mb-6 flex items-center justify-between">
+        <div>
+          <div class="text-xl font-bold text-indigo-600 flex items-center gap-2">
+            <i class="fas fa-graduation-cap"></i>
+            EduVision
+          </div>
+          <div class="text-xs text-gray-500 mt-1">Education Management</div>
+        </div>
+        <button id="themeToggle" class="theme-toggle w-8 h-8 rounded-full flex items-center justify-center text-white text-sm">
+          <i class="fas fa-moon"></i>
+        </button>
+      </div>
+
+      <nav class="space-y-1 text-sm">
+        <a class="nav-item flex items-center gap-3 p-2 rounded-lg active-nav" href="#">
+          <i class="fas fa-th-large w-4 text-center"></i>
+          Dashboard
+        </a>
+        <a class="nav-item flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50" href="#">
+          <i class="fas fa-book-open w-4 text-center"></i>
+          Courses
+        </a>
+        <a class="nav-item flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50" href="#">
+          <i class="fas fa-chalkboard-teacher w-4 text-center"></i>
+          Instructors
+        </a>
+        <a class="nav-item flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50" href="#">
+          <i class="fas fa-user-graduate w-4 text-center"></i>
+          Students
+        </a>
+        <a class="nav-item flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50" href="#">
+          <i class="fas fa-chart-bar w-4 text-center"></i>
+          Analytics
+        </a>
+        <a class="nav-item flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50" href="#">
+          <i class="fas fa-cog w-4 text-center"></i>
+          Settings
+        </a>
+      </nav>
+
+      <div class="mt-6 pt-4 border-t border-gray-100">
+        <div class="flex items-center gap-2 mb-3">
+          <div class="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-sm">
+            <i class="fas fa-user"></i>
+          </div>
+          <div>
+            <div class="text-sm font-medium">Alex Johnson</div>
+            <div class="text-xs text-gray-500">Admin</div>
+          </div>
+        </div>
+        <button class="w-full text-xs text-left p-2 rounded-lg hover:bg-slate-50 flex items-center gap-2">
+          <i class="fas fa-sign-out-alt text-gray-500"></i>
+          Logout
+        </button>
+      </div>
+
+      <div class="mt-6 text-xs text-gray-400">© 2024 EduVision</div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-4 md:p-6 ml-0 md:ml-2 transition-all">
+      <!-- Mobile Topbar -->
+      <div class="md:hidden flex items-center justify-between mb-4">
+        <button id="menuBtn" class="p-2 border rounded-md bg-white shadow-sm">
+          <i class="fas fa-bars"></i>
+        </button>
+        <h1 class="text-xl font-bold">Dashboard</h1>
+        <div class="relative">
+          <button class="p-2 border rounded-md bg-white shadow-sm">
+            <i class="fas fa-bell"></i>
+          </button>
+          <div class="notification-dot"></div>
+        </div>
+      </div>
+
+      <!-- Header -->
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-3">
+        <div>
+          <h1 class="text-xl font-bold text-slate-800">Dashboard Overview</h1>
+          <p class="text-xs text-gray-500">Welcome back, Alex — here's what's happening today.</p>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <div class="relative">
+            <i class="fas fa-search absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400 text-xs"></i>
+            <input type="text" placeholder="Search..." class="pl-7 pr-3 py-1.5 border rounded-md bg-white text-xs shadow-sm focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 w-40">
+          </div>
+          <select class="border rounded-md p-1.5 bg-white text-xs shadow-sm focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500">
+            <option>Last 30 days</option>
+            <option>Last 7 days</option>
+            <option>Last 24 hours</option>
+          </select>
+          <button class="px-3 py-1.5 bg-indigo-600 text-white rounded-md text-xs shadow-sm hover:bg-indigo-700 transition-colors flex items-center gap-1">
+            <i class="fas fa-plus text-xs"></i>
+            New Report
+          </button>
+        </div>
+      </div>
+
+      <!-- Top stat cards - Perfect 4-column grid -->
+      <div class="grid-container mb-6">
+        <div class="stat-card card p-4 gradient-pink">
+          <div class="flex justify-between items-start">
+            <div class="flex gap-3 items-center">
+              <div class="icon-circle" style="width: 40px; height: 40px;">
+                <i class="fas fa-user-graduate text-pink-600 text-sm"></i>
+              </div>
+              <div>
+                <div class="text-xs font-medium text-gray-600">Total Students</div>
+                <div class="text-xl font-extrabold mt-1 text-slate-800">15,280</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="small-pill bg-green-100 text-green-800 text-xs">
+                <i class="fas fa-arrow-up text-xs"></i>
+                12.5%
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 flex items-center text-xs text-gray-500">
+            <i class="fas fa-calendar-alt mr-1 text-xs"></i>
+            <span>Updated today</span>
+          </div>
+        </div>
+
+        <div class="stat-card card p-4 gradient-purple">
+          <div class="flex justify-between items-start">
+            <div class="flex gap-3 items-center">
+              <div class="icon-circle" style="width: 40px; height: 40px;">
+                <i class="fas fa-book-open text-violet-600 text-sm"></i>
+              </div>
+              <div>
+                <div class="text-xs font-medium text-gray-600">Total Courses</div>
+                <div class="text-xl font-extrabold mt-1 text-slate-800">428</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="small-pill bg-green-100 text-green-800 text-xs">
+                <i class="fas fa-arrow-up text-xs"></i>
+                7.2%
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 flex items-center text-xs text-gray-500">
+            <i class="fas fa-calendar-alt mr-1 text-xs"></i>
+            <span>Updated today</span>
+          </div>
+        </div>
+
+        <div class="stat-card card p-4 gradient-cyan">
+          <div class="flex justify-between items-start">
+            <div class="flex gap-3 items-center">
+              <div class="icon-circle" style="width: 40px; height: 40px;">
+                <i class="fas fa-dollar-sign text-cyan-600 text-sm"></i>
+              </div>
+              <div>
+                <div class="text-xs font-medium text-gray-600">Revenue</div>
+                <div class="text-xl font-extrabold mt-1 text-slate-800">$52,480</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="small-pill bg-green-100 text-green-800 text-xs">
+                <i class="fas fa-arrow-up text-xs"></i>
+                5.8%
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 flex items-center text-xs text-gray-500">
+            <i class="fas fa-calendar-alt mr-1 text-xs"></i>
+            <span>Updated today</span>
+          </div>
+        </div>
+
+        <div class="stat-card card p-4 gradient-orange">
+          <div class="flex justify-between items-start">
+            <div class="flex gap-3 items-center">
+              <div class="icon-circle" style="width: 40px; height: 40px;">
+                <i class="fas fa-chart-line text-amber-600 text-sm"></i>
+              </div>
+              <div>
+                <div class="text-xs font-medium text-gray-600">Completion Rate</div>
+                <div class="text-xl font-extrabold mt-1 text-slate-800">78%</div>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="small-pill bg-green-100 text-green-800 text-xs">
+                <i class="fas fa-arrow-up text-xs"></i>
+                3.2%
+              </div>
+            </div>
+          </div>
+          <div class="mt-3 flex items-center text-xs text-gray-500">
+            <i class="fas fa-calendar-alt mr-1 text-xs"></i>
+            <span>Updated today</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section - Perfect 2/3 + 1/3 grid -->
+      <div class="grid-container mb-6">
+        <!-- Main Chart -->
+        <div class="chart-main card p-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-md font-semibold text-slate-800">Enrollment Analytics</h3>
+            <div class="flex gap-1">
+              <button class="text-xs px-2 py-1 rounded-md bg-indigo-50 text-indigo-600 font-medium">Monthly</button>
+              <button class="text-xs px-2 py-1 rounded-md hover:bg-gray-100">Quarterly</button>
+              <button class="text-xs px-2 py-1 rounded-md hover:bg-gray-100">Yearly</button>
+            </div>
+          </div>
+          <div class="h-64"><canvas id="enrollmentChart"></canvas></div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="chart-sidebar card p-4">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-md font-semibold text-slate-800">Recent Activity</h3>
+            <button class="text-xs text-indigo-600 hover:text-indigo-800">View All</button>
+          </div>
+          <div class="space-y-4 max-h-64 overflow-y-auto pr-2">
+            <div class="flex gap-3 items-start">
+              <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xs mt-0.5 flex-shrink-0">
+                <i class="fas fa-user-plus"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-xs font-medium truncate">New student registration</div>
+                <div class="text-xs text-gray-500 mt-1">Sarah Johnson enrolled in Web Development</div>
+                <div class="text-xs text-gray-400 mt-1">2 hours ago</div>
+              </div>
+            </div>
+            <div class="flex gap-3 items-start">
+              <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xs mt-0.5 flex-shrink-0">
+                <i class="fas fa-book"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-xs font-medium truncate">New course published</div>
+                <div class="text-xs text-gray-500 mt-1">Advanced Data Science by Dr. Michael Chen</div>
+                <div class="text-xs text-gray-400 mt-1">5 hours ago</div>
+              </div>
+            </div>
+            <div class="flex gap-3 items-start">
+              <div class="w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center text-amber-600 text-xs mt-0.5 flex-shrink-0">
+                <i class="fas fa-certificate"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-xs font-medium truncate">Course completed</div>
+                <div class="text-xs text-gray-500 mt-1">James Wilson completed UX Design Fundamentals</div>
+                <div class="text-xs text-gray-400 mt-1">Yesterday</div>
+              </div>
+            </div>
+            <div class="flex gap-3 items-start">
+              <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 text-xs mt-0.5 flex-shrink-0">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-xs font-medium truncate">Monthly report generated</div>
+                <div class="text-xs text-gray-500 mt-1">August performance analytics ready</div>
+                <div class="text-xs text-gray-400 mt-1">2 days ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Section - Perfect 3-column grid -->
+      <div class="grid-container">
+        <!-- Traffic Sources -->
+        <div class="bottom-card card p-4">
+          <h3 class="text-md font-semibold mb-4 text-slate-800">Traffic Sources</h3>
+          <div class="h-48 flex items-center justify-center">
+            <canvas id="trafficDonut"></canvas>
+          </div>
+          <div class="flex justify-center gap-4 mt-4 flex-wrap">
+            <div class="flex items-center gap-1">
+              <div class="w-2 h-2 rounded-full bg-orange-400"></div>
+              <span class="text-xs">Organic (35%)</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+              <span class="text-xs">Social (42%)</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <div class="w-2 h-2 rounded-full bg-green-400"></div>
+              <span class="text-xs">Referral (23%)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Course Progress -->
+        <div class="bottom-card card p-4">
+          <h3 class="text-md font-semibold mb-4 text-slate-800">Top Courses</h3>
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="truncate">Web Development</span>
+                <span class="flex-shrink-0">84%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill bg-indigo-500" style="width: 84%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="truncate">Data Science</span>
+                <span class="flex-shrink-0">76%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill bg-green-500" style="width: 76%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="truncate">UX Design</span>
+                <span class="flex-shrink-0">69%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill bg-amber-500" style="width: 69%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="truncate">Digital Marketing</span>
+                <span class="flex-shrink-0">58%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill bg-purple-500" style="width: 58%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="truncate">Mobile Development</span>
+                <span class="flex-shrink-0">45%</span>
+              </div>
+              <div class="progress-bar">
+                <div class="progress-fill bg-cyan-500" style="width: 45%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weekly Activity -->
+        <div class="bottom-card card p-4">
+          <h3 class="text-md font-semibold mb-4 text-slate-800">Weekly Activity</h3>
+          <div class="h-48">
+            <canvas id="activityBar"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="mt-8 text-xs text-gray-500 text-center md:text-left flex flex-col md:flex-row justify-between items-center">
+        <div>
+          © 2024 EduVision. Made with <i class="fas fa-heart text-red-500 mx-1"></i> by <a href="#" class="text-indigo-600 hover:underline">EduVision Team</a>
+        </div>
+        <div class="flex gap-3 mt-2 md:mt-0">
+          <a href="#" class="hover:text-indigo-600">Privacy</a>
+          <a href="#" class="hover:text-indigo-600">Terms</a>
+          <a href="#" class="hover:text-indigo-600">Contact</a>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // Sidebar toggle
+    document.getElementById('menuBtn')?.addEventListener('click', () => {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('-translate-x-full');
+    });
+
+    // Theme toggle
+    document.getElementById('themeToggle')?.addEventListener('click', () => {
+      const body = document.body;
+      const currentTheme = body.getAttribute('data-theme');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      body.setAttribute('data-theme', newTheme);
+      
+      const icon = document.querySelector('#themeToggle i');
+      if (newTheme === 'dark') {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+        body.classList.add('bg-gray-900', 'text-white');
+        body.classList.remove('bg-gray-50', 'text-slate-800');
+      } else {
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+        body.classList.remove('bg-gray-900', 'text-white');
+        body.classList.add('bg-gray-50', 'text-slate-800');
+      }
+    });
+
+    // Charts
+    const ctx = document.getElementById('enrollmentChart');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'],
+        datasets: [
+          { 
+            label:'Enrollments', 
+            data:[120,150,180,220,280,320,380,420,460], 
+            borderColor:'#4f46e5', 
+            backgroundColor:'rgba(79,70,229,0.08)', 
+            fill:true, 
+            tension:0.4, 
+            pointRadius:3,
+            pointBackgroundColor: '#4f46e5',
+            borderWidth: 2
+          },
+          { 
+            label:'Completions', 
+            data:[85,110,135,170,210,250,290,330,360], 
+            borderColor:'#10b981', 
+            backgroundColor:'rgba(16,185,129,0.06)', 
+            fill:true, 
+            tension:0.4, 
+            pointRadius:3,
+            pointBackgroundColor: '#10b981',
+            borderWidth: 2
+          }
+        ]
+      },
+      options:{ 
+        responsive:true, 
+        maintainAspectRatio:false,
+        plugins: {
+          legend: {
+            position: 'top',
+            align: 'end',
+            labels: {
+              boxWidth: 12,
+              font: {
+                size: 11
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0,0,0,0.05)'
+            },
+            ticks: {
+              font: {
+                size: 10
+              }
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              font: {
+                size: 10
+              }
+            }
+          }
+        }
+      }
+    });
+
+    new Chart(document.getElementById('trafficDonut'), {
+      type: 'doughnut',
+      data: { 
+        labels:['Organic','Social','Referral'], 
+        datasets:[{ 
+          data:[35,42,23], 
+          backgroundColor:['#fb923c','#3b82f6','#34d399'], 
+          borderWidth:0,
+          borderRadius: 4
+        }] 
+      },
+      options:{
+        cutout:'70%', 
+        plugins:{ 
+          legend:{ 
+            display:false 
+          }
+        }, 
+        responsive:true, 
+        maintainAspectRatio:false
+      }
+    });
+
+    new Chart(document.getElementById('activityBar'), {
+      type: 'bar',
+      data: {
+        labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+        datasets:[
+          { 
+            label:'Active Students', 
+            data:[320,450,380,520,480,350,420], 
+            backgroundColor:'rgba(79,70,229,0.9)',
+            borderRadius: 3
+          }
+        ]
+      },
+      options:{ 
+        responsive:true, 
+        maintainAspectRatio:false, 
+        scales:{ 
+          y:{ 
+            beginAtZero:true,
+            grid: {
+              color: 'rgba(0,0,0,0.05)'
+            },
+            ticks: {
+              font: {
+                size: 10
+              }
+            }
+          },
+          x: {
+            grid: {
+              display: false
+            },
+            ticks: {
+              font: {
+                size: 10
+              }
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>
